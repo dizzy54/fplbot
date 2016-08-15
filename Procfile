@@ -1,0 +1,1 @@
+web: gunicorn fplbot.wsgi --log-file -
