@@ -7,5 +7,5 @@ class Player(models.Model):
     """Class to hold all player attributes
     """
     fpl_id = models.IntegerField('player id in fpl db')
-    first_name = models.IntegerField('player first name')
-    last_name = models.IntegerField('payer last name')
+    first_name = models.CharField('player first name', max_length=50)
+    last_name = models.CharField('payer last name', max_length=50)
