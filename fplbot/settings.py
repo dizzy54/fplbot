@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 import sys
 import dj_database_url
+from ignored import keys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +25,7 @@ sys.path.append(os.path.join(BASE_DIR, 'lib'))
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', default='')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', default=keys.keys['DJANGO_SECRET_KEY'])
 
 # custom keys
 PAGE_ACCESS_TOKEN = os.getenv('FB_PAGE_TOKEN', default='')
