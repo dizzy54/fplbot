@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 
 import fb
-from lib.prediction import predict
+from .lib.prediction import predict
 
 PAGE_ACCESS_TOKEN = settings.PAGE_ACCESS_TOKEN
 VERIFY_TOKEN = settings.VERIFY_TOKEN
