@@ -13,7 +13,10 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 import os
 import sys
 import dj_database_url
-from ignored import keys
+try:
+    from ignored import keys
+except ImportError:
+    import keys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
