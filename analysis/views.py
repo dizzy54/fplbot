@@ -12,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.conf import settings
 
 import fb
-from . import lib_1
+from lib_1.prediction import predict
 
 PAGE_ACCESS_TOKEN = settings.PAGE_ACCESS_TOKEN
 VERIFY_TOKEN = settings.VERIFY_TOKEN
@@ -107,6 +107,6 @@ class PredictView(generic.View):
         else:
             # # tagged names found
             for name in names:
-                response = lib_1.prediction.predict(name)
+                response = predict(name)
                 responses = responses + response
         return responses
