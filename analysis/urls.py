@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
-from .views import PvpView
+from .views import PredictView
 
 urlpatterns = [
-    url(r'^pvp/', PvpView.asView()),
+    url(r'^predict/', PredictView.asView()),
 ]
