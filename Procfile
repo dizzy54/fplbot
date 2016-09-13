@@ -1,1 +1,1 @@
-web: gunicorn fplbot.wsgi --log-file -
+web: gunicorn fplbot.wsgi --log-file --pythonpath ./fplbot -
