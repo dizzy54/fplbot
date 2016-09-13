@@ -11,11 +11,14 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import sys
 import dj_database_url
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Adding custom library to python path
+sys.path.append(os.path.join(BASE_DIR, 'lib'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
