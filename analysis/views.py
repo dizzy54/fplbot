@@ -48,7 +48,7 @@ class PredictView(generic.View):
 
                     # # send responses
                     for response in responses:
-                        fb.send_message(sender, message)
+                        fb.send_message(sender, response)
         return HttpResponse()
 
     def messaging_events(self, entries):
