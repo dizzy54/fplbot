@@ -23,6 +23,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', default='')
 
+# custom keys
+PAGE_ACCESS_TOKEN = os.getenv('FB_PAGE_TOKEN', default='')
+VERIFY_TOKEN = os.getenv('FB_VERIFY_TOKEN', default='')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
