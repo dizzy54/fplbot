@@ -26,6 +26,7 @@ class PredictView(generic.View):
         return generic.View.dispatch(self, request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
+        print self.request
         if self.request.GET['hub.verify_token'] == VERIFY_TOKEN:
             # basic inital setup here
             return HttpResponse(self.request.GET['hub.challenge'])
