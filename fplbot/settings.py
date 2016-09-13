@@ -21,9 +21,11 @@ except ImportError:
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+'''
 # Adding custom library to python path
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(PROJECT_DIR, 'lib'))
+'''
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
