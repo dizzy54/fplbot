@@ -11,6 +11,7 @@ scikit-learn==0.17.1
 sklearn==0.0
 pandas==0.18.1
 #Theano==0.8.2
-$TF_BINARY_URL
+# change tensorflow url as per machine, this is for heroku linux 64bit
+https://storage.googleapis.com/tensorflow/linux/cpu/tensorflow-0.10.0-cp27-none-linux_x86_64.whl
 h5py==2.6.0
 Keras==1.0.8
