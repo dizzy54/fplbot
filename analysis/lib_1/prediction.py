@@ -362,6 +362,8 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     print weights[0:2]
     model.compile(loss='mean_squared_error', optimizer='adam')
     X_transformed = (X - means) / scales
+    print "transformed X"
+    print X_transformed
     prediction = model.predict(X_transformed)
     print "prediction = %s" % prediction
     predicted_points = int(round(prediction[0]))
