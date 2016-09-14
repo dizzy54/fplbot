@@ -79,17 +79,22 @@ def create_model_dump(position='midfielder'):
 
     # # evaluate model with standardized dataset
     model = baseline_model(num_of_features=num_of_features)
-    model.fit(X_train_transformed, Y_train, nb_epoch=150, batch_size=10, verbose=0, validation_split=0.2)
+    model.fit(X_train_transformed, Y_train, nb_epoch=300, batch_size=10, verbose=0, validation_split=0.2)
     X_test_transformed = (X_test - mean_array) / (scale_array)
     test_predictions_keras = model.predict(X_test_transformed)
     test_predictions = [pred[0] for pred in test_predictions_keras]
 
     # # dump model files
-    model_filepath = 'dumps/keras_%ss/keras_%ss.h5' % (position, position)
+    model_filepath = 'dumps/keras_%ss/keras_%ss.json' % (position, position)
+    weights_filepath = 'dumps/keras_%ss/weights.h5' % (position)
     mean_filepath = 'dumps/keras_%ss/mean.json' % (position)
     scale_filepath = 'dumps/keras_%ss/scale.json' % (position)
 
-    model.save(model_filepath)
+    # model.save(model_filepath)
+    model.save_weights(weights_filepath)
+    model_json = model.to_json()
+    with open(model_filepath, "w") as f:
+        f.write(model_json)
     with open(mean_filepath, 'w') as f:
         f.write(json.dumps(mean_list))
     with open(scale_filepath, 'w') as f:

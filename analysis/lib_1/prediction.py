@@ -6,7 +6,8 @@ import random
 # from sklearn.externals import joblib
 from difflib import SequenceMatcher
 import unicodedata
-from keras.models import load_model
+# from keras.models import load_model
+from keras.models import model_from_json
 
 from create_dataset import get_average_points_per_minute_dict, load_dataset
 
@@ -338,21 +339,28 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     filepath = os.path.join(SCRIPT_DIR, filepath)
     model = joblib.load(filepath)
     '''
-    model_path = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/keras_%ss.h5' % (position, position))
+    model_path = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/keras_%ss.json' % (position, position))
+    weights_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/weights.h5' % (position))
     mean_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/mean.json' % (position))
     scale_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/scale.json' % (position))
 
-    model = load_model(model_path)
+    # model = load_model(model_path)
+    with open(model_path) as f:
+        model_json = f.read()
     with open(mean_filepath) as f:
         means = json.load(f)
     with open(scale_filepath) as f:
         scales = json.load(f)
+    print model_json
     print means
     print scales
+    model = model_from_json(model_json)
+    model.load_weights(weights_filepath)
+    model.compile(loss='mean_squared_error', optimizer='adam')
     X_transformed = (X - means) / scales
     prediction = model.predict(X_transformed)
     print "prediction = %s" % prediction
-    predicted_points = int(round(prediction))
+    predicted_points = int(round(prediction[0]))
     return predicted_points
 
 
