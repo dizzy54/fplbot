@@ -2,6 +2,7 @@
 
 import json
 import random
+import traceback
 
 from django.views import generic
 from django.http.response import HttpResponse
@@ -34,21 +35,24 @@ class PredictView(generic.View):
             return HttpResponse('Error, invalid token')
 
     def post(self, request, *args, **kwargs):
-        print "Handling Messages"
-        payload = request.body
-        # print payload
-        data = json.loads(payload)
-        messaging_entries = data["entry"][0]
-        if "messaging" in messaging_entries and "message" in messaging_entries["messaging"][0]:
-            for sender, message, respond in self.messaging_events(messaging_entries):
-                if respond:
-                    print "Incoming from %s: %s" % (sender, message)
-                    # user_details = fb.get_user_details(sender)
-                    responses = self.get_responses_from_message(message)
+        try:
+            print "Handling Messages"
+            payload = request.body
+            # print payload
+            data = json.loads(payload)
+            messaging_entries = data["entry"][0]
+            if "messaging" in messaging_entries and "message" in messaging_entries["messaging"][0]:
+                for sender, message, respond in self.messaging_events(messaging_entries):
+                    if respond:
+                        print "Incoming from %s: %s" % (sender, message)
+                        # user_details = fb.get_user_details(sender)
+                        responses = self.get_responses_from_message(message)
 
-                    # # send responses
-                    for response in responses:
-                        fb.send_message(sender, response)
+                        # # send responses
+                        for response in responses:
+                            fb.send_message(sender, response)
+        except:
+            traceback.print_exc()
         return HttpResponse()
 
     def messaging_events(self, entries):

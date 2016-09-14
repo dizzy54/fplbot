@@ -318,7 +318,7 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     )
     try:
         X_dict, position = X_dict_return_val
-    except TypeError:
+    except (TypeError, ValueError):
         return X_dict_return_val
 
     # print X_dict
