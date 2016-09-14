@@ -322,13 +322,16 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
         return X_dict_return_val
 
     # print X_dict
-    players_data = load_dataset(position='forward')
-    X_legend = players_data[2]
+    # players_data = load_dataset(position='forward')
+    legend_path = os.path.join(SCRIPT_DIR, 'X_legend.json')
+    with open(legend_path, 'r') as f:
+        X_legend = json.load(f)
+    # X_legend = players_data[2]
     # print X_legend
     X_list = [0.0] * len(X_legend)
     for key, value in X_dict.iteritems():
         # print key
-        print "%s = %s" % (key, value)
+        # print "%s = %s" % (key, value)
         index = X_legend.index(key)
         X_list[index] = value
 
@@ -352,22 +355,22 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
         means = json.load(f)
     with open(scale_filepath) as f:
         scales = json.load(f)
-    print model_json
-    print means
-    print scales
+    # print model_json
+    # print means
+    # print scales
     model = model_from_json(model_json)
     model.load_weights(weights_filepath)
-    weights = model.get_weights()
-    print "weights - "
-    print weights[0:2]
+    # weights = model.get_weights()
+    # print "weights - "
+    # print weights[0:2]
     model.compile(loss='mean_squared_error', optimizer='adam')
-    print "original X"
-    print X
+    # print "original X"
+    # print X
     X_transformed = (X - means) / scales
-    print "transformed X"
-    print X_transformed
+    # print "transformed X"
+    # print X_transformed
     prediction = model.predict(X_transformed)
-    print "prediction = %s" % prediction
+    # print "prediction = %s" % prediction
     predicted_points = int(round(prediction[0]))
     return predicted_points
 

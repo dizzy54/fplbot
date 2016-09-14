@@ -754,7 +754,10 @@ def load_dataset(position='midfielder'):
 
                 X_list.append([v for k, v in data['X'].iteritems()])
                 Y_list.append(data['Y'][Y_legend])
-
+    # # write X_legend to file
+    legend_path = os.path.join(SCRIPT_DIR, 'X_legend.json')
+    with open(legend_path, 'w') as f:
+        f.write(json.dumps(X_legend))
     return X_list, Y_list, X_legend, Y_legend
 
 
