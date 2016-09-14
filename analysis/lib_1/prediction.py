@@ -339,7 +339,7 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     '''
     model_path = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/keras_%ss.h5' % (position, position))
     mean_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/mean.json' % (position))
-    scale_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/scale.js' % (position))
+    scale_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/scale.json' % (position))
 
     model = load_model(model_path)
     with open(mean_filepath) as f:

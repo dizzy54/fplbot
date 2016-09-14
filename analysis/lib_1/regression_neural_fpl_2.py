@@ -87,7 +87,7 @@ def create_model_dump(position='midfielder'):
     # # dump model files
     model_filepath = 'dumps/keras_%ss/keras_%ss.h5' % (position, position)
     mean_filepath = 'dumps/keras_%ss/mean.json' % (position)
-    scale_filepath = 'dumps/keras_%ss/scale.js' % (position)
+    scale_filepath = 'dumps/keras_%ss/scale.json' % (position)
 
     model.save(model_filepath)
     with open(mean_filepath, 'w') as f:
