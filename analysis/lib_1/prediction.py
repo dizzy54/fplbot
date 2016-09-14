@@ -337,9 +337,9 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     filepath = os.path.join(SCRIPT_DIR, filepath)
     model = joblib.load(filepath)
     '''
-    model_path = 'dumps/keras_%ss/keras_%ss.h5' % (position, position)
-    mean_filepath = 'dumps/keras_%ss/mean.json' % (position)
-    scale_filepath = 'dumps/keras_%ss/scale.js' % (position)
+    model_path = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/keras_%ss.h5' % (position, position))
+    mean_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/mean.json' % (position))
+    scale_filepath = os.path.join(SCRIPT_DIR, 'dumps/keras_%ss/scale.js' % (position))
 
     model = load_model(model_path)
     with open(mean_filepath) as f:
