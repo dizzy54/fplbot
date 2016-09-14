@@ -3,6 +3,7 @@ import urllib
 import json
 import os
 import random
+# import h5py
 # from sklearn.externals import joblib
 from difflib import SequenceMatcher
 import unicodedata
@@ -356,6 +357,9 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     print scales
     model = model_from_json(model_json)
     model.load_weights(weights_filepath)
+    weights = model.get_weights()
+    print "weights - "
+    print weights[0:2]
     model.compile(loss='mean_squared_error', optimizer='adam')
     X_transformed = (X - means) / scales
     prediction = model.predict(X_transformed)
