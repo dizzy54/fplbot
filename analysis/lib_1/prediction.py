@@ -464,7 +464,7 @@ def get_prediction_response(predictions):
             'I think ',
             'I predict ',
             'After careful consideration, I can say that ',
-            'It seems to me that ',
+            'It seems that ',
         ])
         if prediction['predicted_points'] > 1:
             plural_string = 's'
