@@ -326,6 +326,7 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     X_list = [0.0] * len(X_legend)
     for key, value in X_dict.iteritems():
         # print key
+        print "%s = %s" % (key, value)
         index = X_legend.index(key)
         X_list[index] = value
 
@@ -346,9 +347,11 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
         means = json.load(f)
     with open(scale_filepath) as f:
         scales = json.load(f)
+    print means
+    print scales
     X_transformed = (X - means) / scales
     prediction = model.predict(X_transformed)
-    # print prediction
+    print "prediction = %s" % prediction
     predicted_points = int(round(prediction))
     return predicted_points
 

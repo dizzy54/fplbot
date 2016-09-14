@@ -93,14 +93,18 @@ class PredictView(generic.View):
                 'Capoue'
             ]
             responses.append(
-                """Sorry, I couldn't find any tagged names in your message. To get prediction for player, please include '#' followed by last name (eg. 'How much will #%s score?').
+                """Sorry, I couldn't find any tagged names in your message.
+                """
+            )
+            responses.append(
+                """To get prediction for player, please include '#' followed by last name (eg. 'How much will #%s score?').
                 """ % (
                     random.choice(random_last_names)
                 )
             )
             responses.append(
                 """
-                Please don't blame me if predictions are innacurate. I'm just a dumb messenger for maths :p. You can send me your feedback at fplpredictor@gmail.com, I would love to get your opinion.
+                Please don't blame me if predictions are innacurate. Feel free to send me feedback at fplpredictor@gmail.com.
                 """
             )
         else:
