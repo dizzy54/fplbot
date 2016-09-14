@@ -3,9 +3,10 @@ import urllib
 import json
 import os
 import random
-from sklearn.externals import joblib
+# from sklearn.externals import joblib
 from difflib import SequenceMatcher
 import unicodedata
+from keras.models import load_model
 
 from create_dataset import get_average_points_per_minute_dict, load_dataset
 
@@ -331,10 +332,22 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
     X = np.array([X_list])
     # load model
     position = position.lower()
+    '''
     filepath = 'dumps/keras_%ss/keras_%ss.pkl' % (position, position)
     filepath = os.path.join(SCRIPT_DIR, filepath)
     model = joblib.load(filepath)
-    prediction = model.predict(X)
+    '''
+    model_path = 'dumps/keras_%ss/keras_%ss.h5' % (position, position)
+    mean_filepath = 'dumps/keras_%ss/mean.json' % (position)
+    scale_filepath = 'dumps/keras_%ss/scale.js' % (position)
+
+    model = load_model(model_path)
+    with open(mean_filepath) as f:
+        means = json.load(f)
+    with open(scale_filepath) as f:
+        scales = json.load(f)
+    X_transformed = (X - means) / scales
+    prediction = model.predict(X_transformed)
     # print prediction
     predicted_points = int(round(prediction))
     return predicted_points
