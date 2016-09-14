@@ -1,6 +1,9 @@
 import requests
 import json
 from django.conf import settings
+import sys
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 fb_text_length_limit = 320
 max_supported_length = fb_text_length_limit * 5
@@ -33,7 +36,7 @@ def send_message(recipient, text, quick_replies=None, token=settings.PAGE_ACCESS
                                   params={"access_token": token},
                                   data=json.dumps({
                                       "recipient": {"id": recipient},
-                                      "message": {"text": text.decode('unicode_escape')}
+                                      "message": {"text": text.decode('string_escape')}
                                   }),
                                   headers={'Content-type': 'application/json'})
             if r.status_code != requests.codes.ok:
