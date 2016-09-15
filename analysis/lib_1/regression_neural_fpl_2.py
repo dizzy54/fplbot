@@ -7,7 +7,8 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import Dropout
 from keras.constraints import maxnorm
-from keras.wrappers.scikit_learn import KerasRegressor
+from keras.regularizers import l1l2
+# from keras.wrappers.scikit_learn import KerasRegressor
 # from keras.layers.normalization import BatchNormalization
 # from sklearn.cross_validation import cross_val_score
 # from sklearn.cross_validation import KFold
@@ -24,7 +25,7 @@ def baseline_model(num_of_features=0):
     # # create model
     K.set_learning_phase(1)
     model = Sequential()
-    model.add(Dense(num_of_features, input_dim=num_of_features, init='normal', activation='relu'))
+    model.add(Dense(num_of_features, input_dim=num_of_features, W_regularizer=l1l2(0.005), init='normal', activation='relu'))
     # model.add(BatchNormalization())
     model.add(Dropout(0.2))
     model.add(Dense(int(num_of_features * 1.5), init='normal', activation='relu', W_constraint=maxnorm(3)))
@@ -55,7 +56,7 @@ def create_model_dump(position='midfielder'):
 
     # Y[Y > 10.0] = 10.0
     num_of_samples = X.shape[0]
-    test_ratio = 0.025
+    test_ratio = 0.01
     num_of_test_samples = int(test_ratio * num_of_samples)
     num_of_train_samples = num_of_samples - num_of_test_samples
 
