@@ -35,6 +35,7 @@ class PredictView(generic.View):
             return HttpResponse('Error, invalid token')
 
     def post(self, request, *args, **kwargs):
+        '''
         try:
             print "Handling Messages"
             payload = request.body
@@ -53,6 +54,7 @@ class PredictView(generic.View):
                             fb.send_message(sender, response)
         except:
             traceback.print_exc()
+        '''
         return HttpResponse()
 
     def messaging_events(self, entries):
