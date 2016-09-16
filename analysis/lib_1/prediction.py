@@ -3,6 +3,8 @@ import urllib
 import json
 import os
 import random
+# import itertools
+import re
 # import h5py
 # from sklearn.externals import joblib
 from difflib import SequenceMatcher
@@ -10,9 +12,43 @@ import unicodedata
 # from keras.models import load_model
 from keras.models import model_from_json
 
-from create_dataset import get_average_points_per_minute_dict, load_dataset
+import ijson
+
+from create_dataset import get_average_points_per_minute_dict
 
 SCRIPT_DIR = os.path.dirname(__file__)
+
+# # !!! remove hardcoding !!!
+player_type_dict = [
+    {
+        'id': 1,
+        'singular_name': "Goalkeeper",
+        'singular_name_short': "GKP",
+        'plural_name': "Goalkeepers",
+        'plural_name_short': "GKP"
+    },
+    {
+        'id': 2,
+        'singular_name': "Defender",
+        'singular_name_short': "DEF",
+        'plural_name': "Defenders",
+        'plural_name_short': "DEF"
+    },
+    {
+        'id': 3,
+        'singular_name': "Midfielder",
+        'singular_name_short': "MID",
+        'plural_name': "Midfielders",
+        'plural_name_short': "MID"
+    },
+    {
+        'id': 4,
+        'singular_name': "Forward",
+        'singular_name_short': "FWD",
+        'plural_name': "Forwards",
+        'plural_name_short': "FWD"
+    }
+]
 
 
 def strip_accents(s):
@@ -71,15 +107,23 @@ def get_fpl_player_id(last_name, first_name=None, fpl_master_data=None):
     if not fpl_master_data:
         master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
         response = urllib.urlopen(master_url)
-        fpl_master_data = json.loads(response.read())
-
+        # fpl_master_data = json.loads(response.read())
+        fpl_master_data = items(response, 'elements.item')
+    # for element in master_data:
+    #     print element['id']
+    # id_name_list = [(element['id'], element['second_name']) for element in fpl_master_data]
+    # print id_name_list
+    # p_ids = items(response, 'elements.id')
+    # second_names = items(response, 'second_name')
     matched_ids = []
     similarity_cutoff = 0.80
 
     last_name = last_name.lower().strip()
 
-    for player in fpl_master_data['elements']:
+    for player in fpl_master_data:
+        # print player
         second_name = strip_accents(player['second_name'])
+        # second_name = strip_accents(second_name)
         words = second_name.split()
         match_ratio = 0.0
         for name in words:
@@ -88,6 +132,7 @@ def get_fpl_player_id(last_name, first_name=None, fpl_master_data=None):
                 match_ratio = this_match_ratio
         if match_ratio > similarity_cutoff:
             matched_ids.append(int(player['id']))
+            # matched_ids.append(int(player_id))
     return matched_ids
 
 
@@ -102,13 +147,14 @@ def generate_X_dict(player_id, player_data=None, table_data=None, fpl_master_dat
     if not fpl_master_data:
         master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
         response = urllib.urlopen(master_url)
-        fpl_master_data = json.loads(response.read())
+        # fpl_master_data = json.loads(response.read())
+        fpl_master_data = items(response, 'elements.item')
 
     player_X_dict = {}
 
     player_gen_data = None
-    for element in fpl_master_data['elements']:
-        # print element
+    for element in fpl_master_data:
+        # print element['id']
         if int(element['id']) == player_id:
             player_gen_data = element
             break
@@ -117,7 +163,7 @@ def generate_X_dict(player_id, player_data=None, table_data=None, fpl_master_dat
         return "Sorry. Something went wrong. Try again later"
 
     player_type = int(player_gen_data['element_type'])
-    player_type_dict = fpl_master_data['element_types']
+    # player_type_dict = fpl_master_data['element_types']
 
     position = [entry['singular_name'] for entry in player_type_dict if int(entry['id']) == player_type][0]
 
@@ -380,7 +426,53 @@ def predict(last_name, first_name=None):
     """
     master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
     response = urllib.urlopen(master_url)
-    fpl_master_data = json.loads(response.read())
+    # fpl_master_data = items(response, 'elements.item')
+    # fpl_teams = items(response, 'teams.item')
+    parser = ijson.parse(response)
+    # teams = [team for team in fpl_teams]
+    # print teams
+    # response2 = copy.copy(response)
+    # fpl_master_data, fpl_master_data_copy = itertools.tee(fpl_master_data)
+    # print fpl_master_data
+    # fpl_master_data = json.loads(response.read())
+    fpl_elements = []
+    teams = []
+    short_element = {}
+    short_team = {}
+    for prefix, event, value in parser:
+        if prefix[:13] == 'elements.item':
+            # for element in fpl_master_data:
+            if prefix == 'elements.item' and event == 'start_map':
+                short_element = {}
+            elif prefix == 'elements.item.id':
+                short_element['id'] = value
+            elif prefix == 'elements.item.first_name':
+                short_element['first_name'] = value
+            elif prefix == 'elements.item.second_name':
+                short_element['second_name'] = value
+            elif prefix == 'elements.item.element_type':
+                short_element['element_type'] = value
+            elif prefix == 'elements.item.now_cost':
+                short_element['now_cost'] = value
+            elif prefix == 'elements.item.team':
+                short_element['team'] = value
+            elif prefix == 'elements.item' and event == 'end_map':
+                fpl_elements.append(short_element)
+                short_element = {}
+        elif prefix[:10] == 'teams.item':
+            if prefix == 'teams.item' and event == 'start_map':
+                short_team = {}
+            elif prefix == 'teams.item.id':
+                short_team['id'] = value
+            elif prefix == 'teams.item.name':
+                short_team['name'] = value
+            elif prefix == 'teams.item.short_name':
+                short_team['short_name'] = value
+            elif prefix == 'teams.item' and event == 'end_map':
+                teams.append(short_team)
+                short_team = {}
+
+    # print teams
 
     league_table_url = 'http://api.football-data.org/v1/competitions/426/leagueTable'
     response = urllib.urlopen(league_table_url)
@@ -389,18 +481,20 @@ def predict(last_name, first_name=None):
     id_list = get_fpl_player_id(
         last_name,
         first_name=first_name,
-        fpl_master_data=fpl_master_data,
+        fpl_master_data=fpl_elements,
     )
+
     predictions = []
     if len(id_list) == 0:
         return ["Sorry, I couldn't find any player with last name '%s'. Please try a different name." % last_name]
     for player_id in id_list:
+        # print player_id
         player_url = 'https://fantasy.premierleague.com/drf/element-summary/%s' % (player_id)
         response = urllib.urlopen(player_url)
         player_data = json.loads(response.read())
         predicted_points = predict_next_round_points(
             player_id,
-            fpl_master_data=fpl_master_data,
+            fpl_master_data=fpl_elements,
             player_data=player_data,
             table_data=table_data
         )
@@ -409,22 +503,23 @@ def predict(last_name, first_name=None):
             predictions.append(predicted_points)
             continue
 
-        for player in fpl_master_data['elements']:
+        # print 'id = ' + str(player_id)
+        for player in fpl_elements:
             if int(player['id']) == player_id:
                 element_type = int(player['element_type'])
-                position = fpl_master_data['element_types'][element_type - 1]['singular_name']
-                position_short = fpl_master_data['element_types'][element_type - 1]['singular_name_short']
+                position = player_type_dict[element_type - 1]['singular_name']
+                position_short = player_type_dict[element_type - 1]['singular_name_short']
                 fixture = player_data['fixtures'][0]
                 is_home = fixture['is_home']
                 week = int(fixture['event'])
                 # find self team
                 team_id = int(player['team'])
-                team = next((item for item in fpl_master_data['teams'] if item['id'] == team_id))
+                team = next((item for item in teams if item['id'] == team_id))
                 team_name = team['name']
                 team_shortname = team['short_name']
                 # find opposition team
                 opp_team_id = int(fixture['team_a']) if is_home else fixture['team_h']
-                opp_team = next((item for item in fpl_master_data['teams'] if item['id'] == opp_team_id))
+                opp_team = next((item for item in teams if item['id'] == opp_team_id))
                 opp_team_name = opp_team['name']
                 opp_team_shortname = opp_team['short_name']
                 entry = {
