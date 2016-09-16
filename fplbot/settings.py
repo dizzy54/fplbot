@@ -38,9 +38,13 @@ PAGE_ACCESS_TOKEN = os.getenv('FB_PAGE_TOKEN', default='')
 VERIFY_TOKEN = os.getenv('FB_VERIFY_TOKEN', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+# Honor the 'X-Forwarded-Proto' header for request.is_secure()
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Allow all host headers
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
