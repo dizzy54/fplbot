@@ -38,7 +38,7 @@ PAGE_ACCESS_TOKEN = os.getenv('FB_PAGE_TOKEN', default='')
 VERIFY_TOKEN = os.getenv('FB_VERIFY_TOKEN', default='')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = []
 
