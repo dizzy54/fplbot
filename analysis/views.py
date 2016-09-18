@@ -15,6 +15,50 @@ from django.conf import settings
 import fb
 from lib_1.prediction import predict
 
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+
+from .forms import LastNameForm
+
+
+def predict_score(request):
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = LastNameForm(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            data = form.cleaned_data
+            last_name_str = data['last_name']
+            responses = get_response_from_last_name(last_name_str)
+            responses_json = json.dumps(responses)
+            return HttpResponse(responses_json)
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = LastNameForm()
+
+    return render(request, 'analysis/name.html', {'form': form})
+
+
+def prediction_result(request):
+    # if this is a POST request we need to process the form data
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = LastNameForm(request.POST)
+        # check whether it's valid:
+        if form.is_valid():
+            # process the data in form.cleaned_data as required
+            # ...
+            # redirect to a new URL:
+            return HttpResponseRedirect('/thanks/')
+
+    # if a GET (or any other method) we'll create a blank form
+    else:
+        form = LastNameForm()
+
+    return render(request, 'analysis/name.html', {'form': form})
+
 PAGE_ACCESS_TOKEN = settings.PAGE_ACCESS_TOKEN
 VERIFY_TOKEN = settings.VERIFY_TOKEN
 
@@ -119,3 +163,21 @@ class PredictView(generic.View):
                 response = predict(name)
                 responses = responses + response
         return responses
+
+
+def get_response_from_last_name(last_name):
+    responses = []
+    words = last_name.split()
+    names = []
+    for word in words:
+        names.append(word)
+    if len(names) == 0:
+        responses.append("Please enter player's last name to get prediction.")
+    else:
+        # # tagged names found
+        for name in names:
+            # print "name=" + str(name)
+            print type(name)
+            response = predict(name)
+            responses = responses + response
+    return responses

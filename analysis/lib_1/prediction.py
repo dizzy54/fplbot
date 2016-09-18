@@ -4,7 +4,7 @@ import json
 import os
 import random
 # import itertools
-import re
+# import re
 # import h5py
 # from sklearn.externals import joblib
 from difflib import SequenceMatcher
@@ -15,6 +15,9 @@ from keras.models import model_from_json
 import ijson
 
 from create_dataset import get_average_points_per_minute_dict
+
+# import tensorflow as tf
+# tf.reset_default_graph()
 
 SCRIPT_DIR = os.path.dirname(__file__)
 
@@ -107,8 +110,8 @@ def get_fpl_player_id(last_name, first_name=None, fpl_master_data=None):
     if not fpl_master_data:
         master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
         response = urllib.urlopen(master_url)
-        # fpl_master_data = json.loads(response.read())
-        fpl_master_data = items(response, 'elements.item')
+        fpl_master_data = json.loads(response.read())['elements']
+        # fpl_master_data = items(response, 'elements.item')
     # for element in master_data:
     #     print element['id']
     # id_name_list = [(element['id'], element['second_name']) for element in fpl_master_data]
@@ -147,8 +150,8 @@ def generate_X_dict(player_id, player_data=None, table_data=None, fpl_master_dat
     if not fpl_master_data:
         master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
         response = urllib.urlopen(master_url)
-        # fpl_master_data = json.loads(response.read())
-        fpl_master_data = items(response, 'elements.item')
+        fpl_master_data = json.loads(response.read())['elements']
+        # fpl_master_data = items(response, 'elements.item')
 
     player_X_dict = {}
 
@@ -380,7 +383,6 @@ def predict_next_round_points(player_id, fpl_master_data=None, player_data=None,
         # print "%s = %s" % (key, value)
         index = X_legend.index(key)
         X_list[index] = value
-
     X = np.array([X_list])
     # load model
     position = position.lower()
