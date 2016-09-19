@@ -20,6 +20,8 @@ from django.http import HttpResponseRedirect
 
 from .forms import LastNameForm
 
+from ratelimit.decorators import ratelimit
+
 
 def predict_score(request):
     # if this is a POST request we need to process the form data
@@ -78,8 +80,8 @@ class PredictView(generic.View):
         else:
             return HttpResponse('Error, invalid token')
 
+    @ratelimit(key='post:object', rate='10/m', method='POST')
     def post(self, request, *args, **kwargs):
-        '''
         try:
             print "Handling Messages"
             payload = request.body
@@ -98,7 +100,7 @@ class PredictView(generic.View):
                             fb.send_message(sender, response)
         except:
             traceback.print_exc()
-        '''
+            return HttpResponse('Sorry. I got an unexpected error. Please try again later, or report to fplpredictor@gmail.com')
         return HttpResponse()
 
     def messaging_events(self, entries):
@@ -165,6 +167,11 @@ class PredictView(generic.View):
         return responses
 
 
+def limit_response(request, exception):
+    message = "Sorry. Our server is too busy right now. Please try again after a few minutes."
+    return HttpResponse(message, status=200)
+
+
 def get_response_from_last_name(last_name):
     responses = []
     words = last_name.split()
@@ -177,7 +184,7 @@ def get_response_from_last_name(last_name):
         # # tagged names found
         for name in names:
             # print "name=" + str(name)
-            print type(name)
+            # print type(name)
             response = predict(name)
             responses = responses + response
     return responses
