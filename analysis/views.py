@@ -87,6 +87,7 @@ class PredictView(generic.View):
             payload = request.body
             print request.POST
             print request.GET
+            print request.META
             # print payload
             data = json.loads(payload)
             messaging_entries = data["entry"][0]
