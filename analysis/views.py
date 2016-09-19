@@ -85,7 +85,7 @@ class PredictView(generic.View):
         try:
             print "Handling Messages"
             payload = request.body
-            print request.POST['object']
+            print request.POST
             # print payload
             data = json.loads(payload)
             messaging_entries = data["entry"][0]
@@ -170,6 +170,7 @@ class PredictView(generic.View):
 
 
 def limit_response(request, exception):
+    print "rate limit exceeded"
     message = "Sorry. Our server is too busy right now. Please try again after a few minutes."
     return HttpResponse(message, status=200)
 
