@@ -85,7 +85,7 @@ class PredictView(generic.View):
         try:
             print "Handling Messages"
             payload = request.body
-            print request.POST('object')
+            print request.POST['object']
             # print payload
             data = json.loads(payload)
             messaging_entries = data["entry"][0]
@@ -101,7 +101,8 @@ class PredictView(generic.View):
                             fb.send_message(sender, response)
         except:
             traceback.print_exc()
-            return HttpResponse('Sorry. I got an unexpected error. Please try again later, or report to fplpredictor@gmail.com')
+            message = 'Sorry. I got an unexpected error. Please try again later, or report to fplpredictor@gmail.com'
+            return HttpResponse(message)
         return HttpResponse()
 
     def messaging_events(self, entries):
