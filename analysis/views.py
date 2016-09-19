@@ -80,7 +80,7 @@ class PredictView(generic.View):
         else:
             return HttpResponse('Error, invalid token')
 
-    @ratelimit(key='post:object', rate='10/m', method='POST')
+    @ratelimit(key='post:object', rate='10/m', method='POST', block=True)
     def post(self, request, *args, **kwargs):
         try:
             print "Handling Messages"
