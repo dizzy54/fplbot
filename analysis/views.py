@@ -80,14 +80,14 @@ class PredictView(generic.View):
         else:
             return HttpResponse('Error, invalid token')
 
-    @ratelimit(key='post:object', rate='10/m', method='POST', block=True)
+    @ratelimit(key='header:x-forwarded-port', rate='10/m', method='POST', block=True)
     def post(self, request, *args, **kwargs):
         try:
             print "Handling Messages"
             payload = request.body
-            print request.POST
-            print request.GET
-            print request.META
+            # print request.POST
+            # print request.GET
+            # print request.META
             # print payload
             data = json.loads(payload)
             messaging_entries = data["entry"][0]
