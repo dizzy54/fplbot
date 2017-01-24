@@ -11,7 +11,7 @@ from keras.regularizers import l1l2
 from keras.metrics import fbeta_score
 from sklearn.preprocessing import StandardScaler
 from matplotlib import pyplot as plt
-from imblearn.over_sampling import SMOTE, ADASYN
+from imblearn.over_sampling import SMOTE    # , ADASYN
 from keras.optimizers import Adam
 
 import sys
@@ -19,6 +19,8 @@ import os
 import errno
 
 sys.setrecursionlimit(10000)
+
+SCRIPT_DIR = os.path.dirname(__file__)
 
 
 # define fbeta beta fn
@@ -58,24 +60,24 @@ CLASS_BINS = [
 # define class weight to tackle skew
 CLASS_WEIGHT = {
     'forward': {
-        0: 1.,
-        1: 5.3 * 0.6,
-        2: 9.4 * 0.6,
+        0: 1.0,
+        1: 7.96 * 0.6 * 0.7,
+        2: 18.30 * 0.6 * 0.7 * 0.8,
     },
     'midfielder': {
-        0: 1.,
+        0: 1.0,
         1: 13.8 * 0.6 * 0.7,
-        2: 21.1 * 0.6 * 0.7 * 0.82,
+        2: 21.1 * 0.6 * 0.7 * 0.8,
     },
     'defender': {
-        0: 1.,
+        0: 1.0,
         1: 5.58 * 0.6 * 0.7,
-        2: 30.71 * 0.6 * 0.7 * 0.75,
+        2: 30.71 * 0.6 * 0.7 * 0.8,
     },
     'goalkeeper': {
-        0: 1.,
-        1: 10.,
-        2: 11.,
+        0: 1.0,
+        1: 4.70 * 0.6 * 0.7 * 1.05,
+        2: 27.03 * 0.6 * 0.7 * 0.7,
     },
 }
 
@@ -337,13 +339,13 @@ def save_model_files(
     mean_list = [mean for mean in mean_array]
     scale_list = [scale for scale in scale_array]
     # # dump model files
-    model_filepath = 'dumps/%s/keras_%ss/keras_%ss.json' % (model_name, position, position)
+    model_filepath = os.path.join(SCRIPT_DIR, 'dumps/%s/keras_%ss/keras_%ss.json' % (model_name, position, position))
     create_filepath(model_filepath)
-    weights_filepath = 'dumps/%s/keras_%ss/weights.h5' % (model_name, position)
+    weights_filepath = os.path.join(SCRIPT_DIR, 'dumps/%s/keras_%ss/weights.h5' % (model_name, position))
     create_filepath(weights_filepath)
-    mean_filepath = 'dumps/%s/keras_%ss/mean.json' % (model_name, position)
+    mean_filepath = os.path.join(SCRIPT_DIR, 'dumps/%s/keras_%ss/mean.json' % (model_name, position))
     create_filepath(mean_filepath)
-    scale_filepath = 'dumps/%s/keras_%ss/scale.json' % (model_name, position)
+    scale_filepath = os.path.join(SCRIPT_DIR, 'dumps/%s/keras_%ss/scale.json' % (model_name, position))
     create_filepath(scale_filepath)
 
     # model.save(model_filepath)
@@ -370,7 +372,7 @@ def train(
     """
 
     # # load dataset
-    data_path = 'fpl_%ss.ssv' % (position)
+    data_path = os.path.join(SCRIPT_DIR, 'fpl_%ss.ssv' % (position))
     df = pd.read_csv(data_path, delim_whitespace=True, header=None)
 
     # # preprocess data
@@ -433,6 +435,7 @@ def train(
         model_name = model_fn.__name__
         save_model_files(model_name, model, position, mean_array, scale_array)
 
+    '''
     # plot training history
 
     # list all data in history
@@ -473,3 +476,4 @@ def train(
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
     plt.show()
+    '''
