@@ -8,6 +8,93 @@ import codecs
 import os
 SCRIPT_DIR = os.path.dirname(__file__)
 
+# from prediction import generate_X_Y_dict
+
+import unicodedata
+
+# # !!! remove hardcoding !!!
+
+player_type_dict = [
+    {
+        'id': 1,
+        'singular_name': "Goalkeeper",
+        'singular_name_short': "GKP",
+        'plural_name': "Goalkeepers",
+        'plural_name_short': "GKP"
+    },
+    {
+        'id': 2,
+        'singular_name': "Defender",
+        'singular_name_short': "DEF",
+        'plural_name': "Defenders",
+        'plural_name_short': "DEF"
+    },
+    {
+        'id': 3,
+        'singular_name': "Midfielder",
+        'singular_name_short': "MID",
+        'plural_name': "Midfielders",
+        'plural_name_short': "MID"
+    },
+    {
+        'id': 4,
+        'singular_name': "Forward",
+        'singular_name_short': "FWD",
+        'plural_name': "Forwards",
+        'plural_name_short': "FWD"
+    }
+]
+
+teams_points_per_match_2015 = {
+    1: float(71) / 38,                      # Arsenal
+    2: float(42) / 38,                      # Bournemouth
+    3: float(37) / 38,                      # Burnley
+    4: float(50) / 38,                      # Chelsea
+    5: float(42) / 38,                      # Crystal Palace
+    6: float(47) / 38,                      # Everton
+    7: float(37) / 38,                      # Hull
+    8: float(81) / 38,                      # Leicester
+    9: float(60) / 38,                      # Liverpool
+    10: float(66) / 38,                     # Man City
+    11: float(66) / 38,                     # Man Utd
+    12: float(37) / 38,                     # Middlesbrough
+    13: float(63) / 38,                     # Southampton
+    14: float(51) / 38,                     # Stoke
+    15: float(38) / 38,                     # Sunderland
+    16: float(47) / 38,                     # Swansea
+    17: float(70) / 38,                     # Spurs
+    18: float(45) / 38,                     # Watford
+    19: float(43) / 38,                     # West Brom
+    20: float(62) / 38,                     # West Ham
+}
+
+fpl_to_football_data_org_team_map = {
+    1: 57,
+    2: 1044,
+    3: 328,
+    4: 61,
+    5: 354,
+    6: 62,
+    7: 322,
+    8: 338,
+    9: 64,
+    10: 65,
+    11: 66,
+    12: 343,
+    13: 340,
+    14: 70,
+    15: 71,
+    16: 72,
+    17: 73,
+    18: 346,
+    19: 74,
+    20: 563,
+}
+
+
+def strip_accents(s):
+    return ''.join(c for c in unicodedata.normalize('NFD', s) if unicodedata.category(c) != 'Mn')
+
 
 def update_2016_fpl_data():
     """downloads and updates FPL data for 2016-2017 season using fpl api
@@ -249,7 +336,252 @@ def get_average_points_per_minute_dict(players_static_data):
     return average_ppmls_dict
 
 
-def create_data_points_2014():
+def generate_X_Y_dict(player_id, player_data=None, table_data=None, fpl_master_data=None, fixture_number=0):
+    """generates a dictionary with features for a player
+    """
+    if not player_data:
+        player_url = 'https://fantasy.premierleague.com/drf/element-summary/%s' % (player_id)
+        response = urllib.urlopen(player_url)
+        player_data = json.loads(response.read())
+
+    if not fpl_master_data:
+        master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
+        response = urllib.urlopen(master_url)
+        fpl_master_data = json.loads(response.read())['elements']
+        # fpl_master_data = items(response, 'elements.item')
+
+    player_X_dict = {}
+
+    player_gen_data = None
+    for element in fpl_master_data:
+        # print element['id']
+        if int(element['id']) == player_id:
+            player_gen_data = element
+            break
+    if not player_gen_data:
+        print "no player gen data"
+        return ["Sorry. Something went wrong. Try again later"]
+
+    player_type = int(player_gen_data['element_type'])
+    # player_type_dict = fpl_master_data['element_types']
+
+    position = [entry['singular_name'] for entry in player_type_dict if int(entry['id']) == player_type][0]
+
+    latest_fixture = player_data['fixtures'][0]
+    latest_fixture_is_home = latest_fixture['is_home']
+    history = player_data['history']
+    print(player_gen_data['web_name'])
+    # print(len(history))
+    history = sorted(history, key=lambda k: k['round'])
+    # print(fixture_number)
+    print("history length = %s" % (len(history)))
+    print("fixture number = %s" % fixture_number)
+    first_round = history[0]['round']
+    last_round = history[-1]['round']
+    print("first round = %s" % first_round)
+    print("last round = %s" % last_round)
+    if fixture_number < first_round:
+        print("player not entered team for this fixture")
+        return "player not entered team for this fixture"
+    if last_round < fixture_number:
+        print("player removed from team before this fixture")
+        return "player removed from team before this fixture"
+    history_entry = history[fixture_number - first_round]
+
+    is_home = history_entry['was_home']
+    week = int(history_entry['round'])
+
+    team_id = int(latest_fixture['team_h']) if latest_fixture_is_home else latest_fixture['team_a']
+    opp_team_id = int(history_entry['opponent_team'])
+    player_X_dict['team_points_per_match_last_season'] = teams_points_per_match_2015[team_id]
+    player_X_dict['opponent_points_per_match_last_season'] = teams_points_per_match_2015[opp_team_id]
+
+    f_path = os.path.join(SCRIPT_DIR, '2014_static_player_dataset.json')
+    with open(f_path, 'r') as f:
+        players_static_data = json.load(f)
+
+    average_ppmls_dict = get_average_points_per_minute_dict(players_static_data)
+
+    past_seasons_data = player_data['history_past']
+    if '2015/16' in past_seasons_data:
+        last_season_points = float(past_seasons_data['2015/16']['total_points'])
+        last_season_minutes = int(past_seasons_data['2015/16']['total_minutes'])
+        if last_season_minutes == 0:
+            # player present but did not play last season. Assign 0
+            player_X_dict['last_season_points_per_minutes'] = 0.0
+        else:
+            player_X_dict['last_season_points_per_minutes'] = last_season_points / last_season_points
+    else:
+        # not in roster last year, assign average
+        player_X_dict['last_season_points_per_minutes'] = average_ppmls_dict[position]
+
+    player_X_dict['is_at_home'] = 1 if is_home else 0
+    player_X_dict['price'] = float(history_entry['value']) / 10
+
+    # history = player_data['history']
+    if len(history) < 3:
+        print "not enough matches played in season, cannot predict"
+        return ["not enough matches played in season, cannot predict"]
+    
+    history = history[:week - first_round]
+    if len(history) < 3:
+        print "not enough matches played, cannot predict"
+        return ["not enough matches played, cannot predict"]
+
+    # last_match_data = history[-1]
+
+    goals_scored = 0.0
+    goals_conceded = 0.0
+    assists = 0.0
+    bps = 0.0
+    clean_sheets = 0.0
+    yellow_cards = 0.0
+    red_cards = 0.0
+    minutes = 0.0
+    saves = 0.0
+    points = 0.0
+    net_transfers = 0.0
+    matches_played = 0
+    # price = 0
+
+    for fixture in history:
+        goals_scored += float(fixture['goals_scored'])
+        # print goals_scored
+        goals_conceded += float(fixture['goals_conceded'])
+        assists += float(fixture['assists'])
+        bps += float(fixture['bps'])
+        clean_sheets += float(fixture['clean_sheets'])
+        yellow_cards += float(fixture['yellow_cards'])
+        red_cards += float(fixture['red_cards'])
+        minutes += float(fixture['minutes'])
+        saves += float(fixture['saves'])
+        points += float(fixture['total_points'])
+        net_transfers += float(fixture['transfers_balance'])
+        matches_played += 1 if float(fixture['minutes']) > 0 else 0
+
+    if matches_played < 3:
+        print "not enough matches played for prediction"
+        return ["not enough matches played for prediction"]
+    player_X_dict['goals_scored_per_match_played'] = goals_scored / matches_played
+    player_X_dict['goals_conceded_per_match_played'] = goals_conceded / matches_played
+    player_X_dict['assists_per_match_played'] = assists / matches_played
+    player_X_dict['bps_per_match_played'] = bps / matches_played
+    player_X_dict['clean_sheets_per_match_played'] = clean_sheets / matches_played
+    player_X_dict['yellow_cards_per_match_played'] = yellow_cards / matches_played
+    player_X_dict['red_cards_per_match_played'] = red_cards / matches_played
+    player_X_dict['minutes_per_match_played'] = minutes / matches_played
+    player_X_dict['saves_per_match_played'] = saves / matches_played
+    player_X_dict['points_per_match_played'] = points / matches_played
+    player_X_dict['net_transfers_per_match_played'] = net_transfers / matches_played
+
+    history_form = history[-3:]
+
+    goals_scored = 0.0
+    goals_conceded = 0.0
+    assists = 0.0
+    bps = 0.0
+    clean_sheets = 0.0
+    yellow_cards = 0.0
+    red_cards = 0.0
+    minutes = 0.0
+    saves = 0.0
+    points = 0.0
+    net_transfers = 0.0
+    matches_played = 0
+    # price = 0
+    for fixture in history_form:
+        goals_scored += float(fixture['goals_scored'])
+        goals_conceded += float(fixture['goals_conceded'])
+        assists += float(fixture['assists'])
+        bps += float(fixture['bps'])
+        clean_sheets += float(fixture['clean_sheets'])
+        yellow_cards += float(fixture['yellow_cards'])
+        red_cards += float(fixture['red_cards'])
+        minutes += float(fixture['minutes'])
+        saves += float(fixture['saves'])
+        points += float(fixture['total_points'])
+        net_transfers += float(fixture['transfers_balance'])
+        matches_played += 1 if float(fixture['minutes']) > 0 else 0
+
+    if matches_played < 1:
+        player_X_dict['avg_goals_scored_form'] = player_X_dict['goals_scored_per_match_played']
+        player_X_dict['avg_goals_conceded_form'] = player_X_dict['goals_conceded_per_match_played']
+        player_X_dict['avg_assists_form'] = player_X_dict['assists_per_match_played']
+        player_X_dict['avg_bps_form'] = player_X_dict['bps_per_match_played']
+        player_X_dict['avg_clean_sheets_form'] = player_X_dict['clean_sheets_per_match_played']
+        player_X_dict['avg_yellow_cards_form'] = player_X_dict['yellow_cards_per_match_played']
+        player_X_dict['avg_red_cards_form'] = player_X_dict['red_cards_per_match_played']
+        player_X_dict['avg_minutes_form'] = player_X_dict['minutes_per_match_played']
+        player_X_dict['avg_saves_form'] = player_X_dict['saves_per_match_played']
+        player_X_dict['avg_points_form'] = player_X_dict['points_per_match_played']
+        player_X_dict['avg_net_transfers_form'] = net_transfers / 3
+    else:
+        player_X_dict['avg_goals_scored_form'] = goals_scored / matches_played
+        player_X_dict['avg_goals_conceded_form'] = goals_conceded / matches_played
+        player_X_dict['avg_assists_form'] = assists / matches_played
+        player_X_dict['avg_bps_form'] = bps / matches_played
+        player_X_dict['avg_clean_sheets_form'] = clean_sheets / matches_played
+        player_X_dict['avg_yellow_cards_form'] = yellow_cards / matches_played
+        player_X_dict['avg_red_cards_form'] = red_cards / matches_played
+        player_X_dict['avg_minutes_form'] = minutes / matches_played
+        player_X_dict['avg_saves_form'] = saves / matches_played
+        player_X_dict['avg_points_form'] = points / matches_played
+        player_X_dict['avg_net_transfers_form'] = net_transfers / matches_played
+
+    player_X_dict['price_change_form'] = (
+        float(history_form[-1]['value']) - float(history_form[0]['value'])
+    ) / len(history_form)
+
+    if not table_data:
+        matchday = week - 1
+        try:
+            league_table_url = 'http://api.football-data.org/v1/competitions/426/leagueTable/?matchday=%s' % matchday
+        except:
+            print('Sorry. Something went wrong. Try again later')
+            return ["Sorry. Something went wrong. Try again later"]
+        response = urllib.urlopen(league_table_url)
+        table_data = json.loads(response.read())
+
+    standings = table_data['standing']
+    team_link = 'http://api.football-data.org/v1/teams/%s' % fpl_to_football_data_org_team_map[team_id]
+    # print "team link = %s" % team_link
+    opp_team_link = 'http://api.football-data.org/v1/teams/%s' % fpl_to_football_data_org_team_map[opp_team_id]
+    team_table_data = None
+    opp_team_table_data = None
+    for entry in standings:
+        # print entry['_links']['team']['href']
+        if str(entry['_links']['team']['href']) == team_link:
+            # print team_link
+            team_table_data = entry
+        if str(entry['_links']['team']['href']) == opp_team_link:
+            # print opp_team_link
+            opp_team_table_data = entry
+
+    if not team_table_data or not opp_team_table_data:
+        if not team_table_data:
+            print "no team table data"
+        if not opp_team_table_data:
+            print "on opposition team data"
+        return ["Sorry. Something went wrong. Try again later"]
+
+    team_matches_played = int(team_table_data['playedGames'])
+    opp_team_matches_played = int(opp_team_table_data['playedGames'])
+
+    player_X_dict['team_goals_scored_per_match'] = float(team_table_data['goals']) / team_matches_played
+    player_X_dict['team_goals_conceded_per_match'] = float(team_table_data['goalsAgainst']) / team_matches_played
+    player_X_dict['team_points_per_match'] = float(team_table_data['points']) / team_matches_played
+
+    player_X_dict['opponent_goals_scored_per_match'] = float(opp_team_table_data['goals']) / opp_team_matches_played
+    player_X_dict['opponent_goals_conceded_per_match'] = float(opp_team_table_data['goalsAgainst']) / opp_team_matches_played
+    player_X_dict['opponent_points_per_match'] = float(opp_team_table_data['points']) / opp_team_matches_played
+
+    points_scored = int(history_entry['total_points'])
+
+    print('data returned')
+    return player_X_dict, position, points_scored
+
+
+def create_data_points():
     """creates data points of the form
         player_id,
         last_season_points_per_minutes,
@@ -631,107 +963,85 @@ def create_data_points_2014():
                     'Y': {'points_scored': float(value[i]['points'])}
                 }
 
+    # adding entries for 2016 season
+    id_prefix = 16000
+    f_path = os.path.join(SCRIPT_DIR, 'fpl_2016_data.json')
+    with open(f_path, 'r') as f:
+        data_2016 = json.load(f)
+
+    master_url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
+    response = urllib.urlopen(master_url)
+    fpl_master_data = json.loads(response.read())
+    master_elements = sorted(fpl_master_data['elements'], key=lambda k: int(k['id']))
+
+    # to create team name dict
+    team_dict = fpl_master_data['teams']
+    team_name_dict = {}
+    for team in team_dict:
+        team_name_dict[team['code']] = team['name']
+
+    table_data_dict = {}
+
+    for player_dict in data_2016['elements']:
+        player_data = player_dict['player_data']
+        id = int(player_dict['id'])
+        element = player_dict
+        name = '%s %s' % (strip_accents(element['first_name']), strip_accents(element['second_name']))
+        team_id = element['team_code']
+        player_type = int(element['element_type'])
+        position = [entry['singular_name'] for entry in player_type_dict if int(entry['id']) == player_type][0]
+        coming_fixture = player_data['fixtures'][0]
+        coming_week = int(coming_fixture['event'])
+        meta_data = {
+            'name': name,
+            'position': position,
+            'team': team_name_dict[team_id],
+        }
+        X_and_Y = []
+
+        data_dict_per_week = defaultdict(dict)
+        key = id_prefix + int(id)
+        data_dict[key] = {
+            'meta': meta_data,
+            'data': data_dict_per_week,
+        }
+
+        for week in range(3, coming_week):
+            # find table position
+            table_key = week
+            if table_key in table_data_dict:
+                table_data = table_data_dict[table_key]
+            else:
+                matchday = week - 1
+                try:
+                    league_table_url = 'http://api.football-data.org/v1/competitions/426/leagueTable/?matchday=%s' % matchday
+                except:
+                    print('Sorry. Something went wrong. Try again later')
+                    return ["Sorry. Something went wrong. Try again later"]
+                response = urllib.urlopen(league_table_url)
+                table_data = json.loads(response.read())
+                table_data_dict[table_key] = table_data
+            X_pos_y = generate_X_Y_dict(
+                id,
+                player_data=player_data,
+                table_data=table_data,
+                fpl_master_data=master_elements,
+                fixture_number=week,
+            )
+            if (len(X_pos_y) != 3):
+                # print(X_pos_y[0])
+                continue
+            X, position, y = X_pos_y
+            X_and_Y = {
+                'X': X,
+                'Y': {'points_scored': y},
+            }
+            # print(X)
+            data_dict[key]['data'][week] = X_and_Y
+
     f_path = os.path.join(SCRIPT_DIR, 'player_ml_data.json')
     with open(f_path, 'w') as f:
         f.write(json.dumps(data_dict))
-
-
-'''
-def create_player_dataset_current():
-    """creates a json list with following values per player for each player in fpl 2016 db
-        id,
-        points_last_season (None if not in last season roster),
-        minutes_last_season (None if not in 2013 roster),
-        first_name,
-        second_name,
-        position,
-        team_id,
-        team_name,
-        team_shortname,
-    """
-
-    # load 2106 fpl player data
-    url = 'https://fantasy.premierleague.com/drf/bootstrap-static'
-    response = urllib.urlopen(url)
-    fpl_data = json.load(response)
-    fpl16_player_data = fpl_data['elements']
-    # fpl16_team_data = fpl_data['teams']
-    fpl16_player_position_key = fpl_data['element_types']
-    position_key_dict = {}
-    for type_dict in fpl16_player_position_key:
-        position_key_dict[type_dict['id']] = type_dict['singular_name']
-    fpl16_team_key = fpl_data['teams']
-    team_list = []
-    for team in teams:
-        fpl16_id = team['id']
-        different_names = {
-            'Hull': 'Hull City',
-            'Leicester': 'Leicester City',
-            'Man Utd': 'Manchester United',
-            'Swansea': 'Swansea City',
-            'Spurs': 'Tottenham Hotspurs',
-            'Stoke': 'Stoke City',
-            'West Brom': 'West Bromwich Albion',
-            'West Ham': 'West Ham United'
-        }
-        ''''''
-        absent_in_2014 = [
-            'Bournemouth',
-            'Middlesbrough',
-            'Watford',
-        ]
-        ''''''
-        team_name = team['name']
-        fpl16_name = team_name if team_name not in different_names else different_names[team_name]
-        fpl16_shortname = team['short_name']
-        team_list.append[fpl16_id, fpl16_name, fpl16_shortname]
-
-    # ambiguous_list = []
-    # match both set of players through name, (if multiple) then position, (if multiple) then team
-    for player16 in fpl16_player_data:
-        name16 = (player16['first_name'] + ' ' + player16['second_name']).lower()
-        matches = []
-        for player14 in fpl14_player_list:
-            name14 = player14[1].lower()
-            match_ratio = SequenceMatcher(None, name16, name14).ratio()
-            if match_ratio > 0.8:
-                matches.append({
-                    'id': int(player14[0]),
-                    'name': player14[1],
-                    'team': player14[2],
-                    'position': player14[3],
-                    'match_ratio': match_ratio,
-                })
-        if len(matches) == 0:
-            # no match found
-            id_in_fpl14 = None
-            team_fpl14 = None
-
-        elif len(matches) == 1:
-            # exactly 1 match found
-            id_in_fpl14 = matches[0]['id']
-        else:
-            # multiple matched found
-            sorted_matches = sorted(matches, key=lambda k: k['match_ratio'], reverse=True)
-            if sorted_matches[0]['match_ratio'] > 0.95 and sorted_matches[1]['match_ratio'] <= 0.95:
-                # first assumed as perfect match
-                id_in_fpl14 = sorted_matches[0]['id']
-            else:
-                matches_with_same_position = []
-                for match in sorted_matches:
-                    if position_key_dict[player16['element_type']] == match['position']:
-                        matches_with_same_position.append(match)
-                number_of_matches = len(matches_with_same_position)
-                if number_of_matches == 0:
-                    id_in_fpl14 = None
-                elif number_of_matches == 1:
-                    id_in_fpl14 = matches_with_same_position[0]['id']
-                else:
-                    # still multiple matches, assign highest
-                    id_in_fpl14 = matches_with_same_position[0]['id']
-                    # ambiguous_list.append({'name16': name16, 'matches': matches_with_same_position})
-                    pass
-'''
 
 
 def load_dataset(position='midfielder'):
@@ -743,17 +1053,31 @@ def load_dataset(position='midfielder'):
     Y_legend = None
     X_list = []
     Y_list = []
+    first = True
     # filtered_dict = {k: v for k, v in data_dict.iteritems() if v['meta']['position'].lower() == position.lower()}
     for id, values in data_dict.iteritems():
         if values['meta']['position'].lower() == position.lower():
             for week, data in values['data'].iteritems():
                 if not X_legend:
                     X_legend = [k for k, v in data['X'].iteritems()]
+                    X_legend = sorted(X_legend)
+                    print(X_legend)
+                    # print([v for k, v in data['X'].iteritems()])
                 if not Y_legend:
                     Y_legend = [k for k, v in data['Y'].iteritems()][0]
 
-                X_list.append([v for k, v in data['X'].iteritems()])
+                X_l = []
+                for i in range(0, len(data['X'])):
+                    X_l.append(data['X'][X_legend[i]])
+                if first:
+                    print('id: %s' % id)
+                    print(values['meta']['name'])
+                    print('week: %s' % week)
+                    print(X_l)
+                X_list.append(X_l)
                 Y_list.append(data['Y'][Y_legend])
+                if first:
+                    first = False
     # # write X_legend to file
     legend_path = os.path.join(SCRIPT_DIR, 'X_legend.json')
     with open(legend_path, 'w') as f:

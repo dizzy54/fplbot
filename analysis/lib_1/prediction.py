@@ -139,7 +139,7 @@ def get_fpl_player_id(last_name, first_name=None, fpl_master_data=None):
     return matched_ids
 
 
-def generate_X_dict(player_id, player_data=None, table_data=None, fpl_master_data=None):
+def generate_X_dict(player_id, player_data=None, table_data=None, fpl_master_data=None, fixture_number=0):
     """generates a dictionary with features for a player
     """
     if not player_data:
@@ -170,7 +170,7 @@ def generate_X_dict(player_id, player_data=None, table_data=None, fpl_master_dat
 
     position = [entry['singular_name'] for entry in player_type_dict if int(entry['id']) == player_type][0]
 
-    fixture = player_data['fixtures'][0]
+    fixture = player_data['fixtures'][fixture_number]
     is_home = fixture['is_home']
     week = int(fixture['event'])
 

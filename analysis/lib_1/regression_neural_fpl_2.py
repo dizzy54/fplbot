@@ -56,7 +56,7 @@ def create_model_dump(position='midfielder'):
 
     # Y[Y > 10.0] = 10.0
     num_of_samples = X.shape[0]
-    test_ratio = 0.01
+    test_ratio = 0.1
     num_of_test_samples = int(test_ratio * num_of_samples)
     num_of_train_samples = num_of_samples - num_of_test_samples
 
